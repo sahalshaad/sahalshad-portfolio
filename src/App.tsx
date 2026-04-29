@@ -131,7 +131,7 @@ function App() {
   const [cmsData, setCmsData] = useState<CmsPayload | null>(null)
   const [contactStatus, setContactStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
-  const defaultName = 'Your Name'
+  const defaultName = 'sahalshad'
   const defaultRole = 'Digital Marketing Specialist'
   const defaultDescription =
     'I help ambitious brands grow through Performance Marketing, Meta Ads, and Lead Generation systems designed to increase qualified pipeline and revenue.'

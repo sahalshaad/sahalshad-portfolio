@@ -26,7 +26,7 @@ class Command(BaseCommand):
         profile_image_path = base_dir / "public" / "pixo.sahal.png"
 
         hero, _ = HeroSection.objects.get_or_create(
-            name="Your Name",
+            name="sahalshad",
             defaults={
                 "title": "Digital Marketing Specialist",
                 "description": (
