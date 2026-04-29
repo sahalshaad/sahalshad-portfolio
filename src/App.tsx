@@ -147,6 +147,11 @@ function App() {
   const name = hero?.name || defaultName
   const websiteName = general?.site_name || 'sahalshad'
   const role = hero?.title || defaultRole
+  const socialLinks = [
+    general?.linkedin_url ? { href: general.linkedin_url, label: 'LinkedIn' } : null,
+    general?.instagram_url ? { href: general.instagram_url, label: 'Instagram' } : null,
+    general?.portfolio_url ? { href: general.portfolio_url, label: 'Portfolio' } : null,
+  ].filter((link): link is { href: string; label: string } => Boolean(link))
 
   useEffect(() => {
     let mounted = true
@@ -865,15 +870,17 @@ function App() {
               </div>
 
               <div className="mt-8 grid gap-3">
-                <a
-                  className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold shadow-sm transition hover:bg-zinc-50"
-                  href={general?.linkedin_url || 'https://www.linkedin.com/'}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <Link2 className="h-4 w-4" />
-                  LinkedIn
-                </a>
+                {general?.linkedin_url ? (
+                  <a
+                    className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold shadow-sm transition hover:bg-zinc-50"
+                    href={general.linkedin_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Link2 className="h-4 w-4" />
+                    LinkedIn
+                  </a>
+                ) : null}
                 {cv?.file_url ? (
                   <a
                     className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold shadow-sm transition hover:bg-zinc-50"
@@ -957,11 +964,13 @@ function App() {
             <div className="text-sm text-zinc-600">
               <span className="font-semibold text-zinc-950">{websiteName}</span> — Digital Marketing • ROI • Growth
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <FooterLink href={general?.linkedin_url || 'https://www.linkedin.com/'} label="LinkedIn" />
-              <FooterLink href={general?.instagram_url || 'https://www.instagram.com/'} label="Instagram" />
-              <FooterLink href={general?.portfolio_url || '#work'} label="Portfolio" />
-            </div>
+            {socialLinks.length ? (
+              <div className="flex flex-wrap items-center gap-2">
+                {socialLinks.map((link) => (
+                  <FooterLink key={link.label} href={link.href} label={link.label} />
+                ))}
+              </div>
+            ) : null}
           </div>
         </footer>
       </main>

@@ -144,5 +144,40 @@ class CVDocumentAdmin(admin.ModelAdmin):
 
 @admin.register(GeneralSettings)
 class GeneralSettingsAdmin(admin.ModelAdmin):
-    list_display = ("site_name", "email", "phone_number", "is_active", "updated_at")
+    list_display = ("site_name", "email", "phone_number", "social_links", "is_active", "updated_at")
     list_editable = ("is_active",)
+    fieldsets = (
+        ("Website", {"fields": ("site_name", "is_active")}),
+        (
+            "Social Media Links",
+            {
+                "fields": ("linkedin_url", "instagram_url", "portfolio_url"),
+                "description": "Paste the full profile URL, including https://",
+            },
+        ),
+        ("Contact Details", {"fields": ("email", "phone_number")}),
+    )
+
+    def has_add_permission(self, request):
+        if GeneralSettings.objects.exists():
+            return False
+        return super().has_add_permission(request)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)
+        return actions
+
+    @admin.display(description="Social links")
+    def social_links(self, obj):
+        links = []
+        if obj.linkedin_url:
+            links.append(format_html('<a href="{}" target="_blank">LinkedIn</a>', obj.linkedin_url))
+        if obj.instagram_url:
+            links.append(format_html('<a href="{}" target="_blank">Instagram</a>', obj.instagram_url))
+        if obj.portfolio_url:
+            links.append(format_html('<a href="{}" target="_blank">Portfolio</a>', obj.portfolio_url))
+        return format_html(" | ".join("{}" for _ in links), *links) if links else "-"
