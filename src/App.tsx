@@ -129,6 +129,7 @@ function App() {
   const prefersReducedMotion = useReducedMotion()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [cmsData, setCmsData] = useState<CmsPayload | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [contactStatus, setContactStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   const defaultName = 'sahalshad'
@@ -165,15 +166,26 @@ function App() {
       .then((data: CmsPayload) => {
         if (mounted) {
           setCmsData(data)
+          setIsLoading(false)
         }
       })
       .catch(() => {
-        // Keep static fallback content when Django API isn't available.
+        if (mounted) {
+          setIsLoading(false)
+        }
       })
     return () => {
       mounted = false
     }
   }, [])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-white text-zinc-950">
+        <p className="text-base text-zinc-500">Loading portfolio content…</p>
+      </div>
+    )
+  }
 
   const nav = useMemo(
     () => [
