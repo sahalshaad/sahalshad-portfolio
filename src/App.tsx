@@ -179,14 +179,6 @@ function App() {
     }
   }, [])
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen grid place-items-center bg-white text-zinc-950">
-        <p className="text-base text-zinc-500">Loading portfolio content…</p>
-      </div>
-    )
-  }
-
   const nav = useMemo(
     () => [
       { label: 'Services', href: '#services' },
@@ -376,6 +368,14 @@ function App() {
       },
     }
   }, [prefersReducedMotion])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-white text-zinc-950">
+        <p className="text-base text-zinc-500">Loading portfolio content…</p>
+      </div>
+    )
+  }
 
   function closeMobileNav() {
     setMobileNavOpen(false)
