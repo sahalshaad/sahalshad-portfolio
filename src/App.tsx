@@ -139,7 +139,7 @@ function App() {
   const defaultSkills = ['Meta Ads', 'Google Ads', 'GA4', 'SEO', 'CRO', 'Landing Pages', 'Funnels']
 
   const hero = cmsData?.hero
-  const heroImageUrl = hero?.profile_image_url || (cmsData ? '' : DEFAULT_HERO_IMAGE)
+  const heroImageUrl = hero?.profile_image_url || DEFAULT_HERO_IMAGE
   const contact = cmsData?.contact
   const general = cmsData?.settings
   const cv = cmsData?.cv
@@ -205,15 +205,13 @@ function App() {
   )
 
   const services = useMemo(() => {
-    if (cmsData?.services?.length) {
-      return cmsData.services.map((item) => ({
+    return (
+      cmsData?.services?.map((item) => ({
         icon: iconMap[item.icon_class] || LineChart,
         iconImageUrl: item.icon_image_url,
         title: item.service_title,
         desc: item.description,
-      }))
-    }
-    return [
+      })) ?? [
       {
         icon: LineChart,
         iconImageUrl: '',
@@ -239,18 +237,17 @@ function App() {
         desc: 'Landing pages, lead magnets, and nurture flows designed to lift CVR and reduce CPL.',
       },
     ]
-  }, [cmsData?.services, iconMap])
+  )
+}, [cmsData?.services, iconMap])
 
   const experience = useMemo<Experience[]>(
     () =>
-      cmsData?.experiences?.length
-        ? cmsData.experiences.map((item) => ({
-            role: item.job_role,
-            company: item.company_name,
-            duration: item.duration,
-            achievements: [item.description],
-          }))
-        : [
+      cmsData?.experiences?.map((item) => ({
+        role: item.job_role,
+        company: item.company_name,
+        duration: item.duration,
+        achievements: [item.description],
+      })) ?? [
             {
               role: 'Digital Marketing Lead',
               company: 'Growth Studio',
@@ -287,16 +284,14 @@ function App() {
 
   const caseStudies = useMemo<CaseStudy[]>(
     () =>
-      cmsData?.projects?.length
-        ? cmsData.projects.map((item) => ({
-            title: item.project_title,
-            category: item.category,
-            description: item.description,
-            result: item.results,
-            imageUrl: item.image_url,
-            externalLink: item.external_link,
-          }))
-        : [
+      cmsData?.projects?.map((item) => ({
+        title: item.project_title,
+        category: item.category,
+        description: item.description,
+        result: item.results,
+        imageUrl: item.image_url,
+        externalLink: item.external_link,
+      })) ?? [
             {
               title: 'Lead Engine for a Coaching Program',
               category: 'Funnels',
@@ -322,10 +317,7 @@ function App() {
   )
 
   const stats = useMemo(
-    () =>
-      cmsData?.stats?.length
-        ? cmsData.stats
-        : [
+    () => cmsData?.stats ?? [
             { label: 'Total Ad Spend Managed', value: '$250k+' },
             { label: 'Leads Generated', value: '3,500+' },
             { label: 'Clients Worked With', value: '18+' },
@@ -336,20 +328,18 @@ function App() {
 
   const testimonials = useMemo<Testimonial[]>(
     () =>
-      cmsData?.testimonials?.length
-        ? cmsData.testimonials.map((item) => ({
-            quote: item.feedback,
-            name: item.client_name,
-            title: item.designation || 'Client',
-            initials: item.client_name
-              .split(' ')
-              .slice(0, 2)
-              .map((s) => s[0])
-              .join('')
-              .toUpperCase(),
-            imageUrl: item.image_url,
-          }))
-        : [
+      cmsData?.testimonials?.map((item) => ({
+        quote: item.feedback,
+        name: item.client_name,
+        title: item.designation || 'Client',
+        initials: item.client_name
+          .split(' ')
+          .slice(0, 2)
+          .map((s) => s[0])
+          .join('')
+          .toUpperCase(),
+        imageUrl: item.image_url,
+      })) ?? [
             {
               quote:
                 'Clear strategy, fast execution, and the reporting was refreshingly business-focused. Our leads improved within weeks.',
