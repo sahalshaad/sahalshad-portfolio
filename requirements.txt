@@ -3,3 +3,5 @@ django-jazzmin
 django-ckeditor
 django-cors-headers
 pillow
+dj-database-url
+psycopg2-binary
