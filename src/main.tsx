@@ -7,6 +7,9 @@ const AdminApp = lazy(() => import('./admin/AdminApp'))
 
 function AdminRouteWrapper() {
   useEffect(() => {
+    const prevTitle = document.title
+    document.title = 'Sahal Shad Admin Portal'
+
     let meta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null
     let created = false
     if (!meta) {
@@ -16,9 +19,10 @@ function AdminRouteWrapper() {
       created = true
     }
     const previousContent = meta.content
-    meta.content = 'noindex, nofollow'
+    meta.content = 'noindex, nofollow, noarchive'
 
     return () => {
+      document.title = prevTitle
       if (created) {
         meta?.remove()
       } else if (meta) {

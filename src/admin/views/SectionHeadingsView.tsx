@@ -28,28 +28,16 @@ const CANONICAL_SECTIONS: SectionMeta[] = [
   },
   {
     key: 'work',
-    label: 'Featured Work / Projects',
-    description: 'Header text for the selected case studies and campaign portfolio.',
-  },
-  {
-    key: 'results',
-    label: 'Results & Impact',
-    description: 'Header text for key statistics, ROI benchmarks, and achievements.',
-  },
-  {
-    key: 'testimonials',
-    label: 'Client Testimonials',
-    description: 'Header text for client recommendations and reviews.',
+    label: 'Own Projects & Work',
+    description: 'Header text for the selected projects and portfolio showcase.',
   },
 ]
 
 export function SectionHeadingsView() {
-  const [sections, setSections] = useState<Record<SectionKey, SectionContent | null>>({
+  const [sections, setSections] = useState<Record<string, SectionContent | null>>({
     services: null,
     experience: null,
     work: null,
-    results: null,
-    testimonials: null,
   })
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -78,12 +66,10 @@ export function SectionHeadingsView() {
       const { data, error } = await supabase.from('section_contents').select('*')
       if (error) throw error
 
-      const map: Record<SectionKey, SectionContent | null> = {
+      const map: Record<string, SectionContent | null> = {
         services: null,
         experience: null,
         work: null,
-        results: null,
-        testimonials: null,
       }
 
       if (data) {

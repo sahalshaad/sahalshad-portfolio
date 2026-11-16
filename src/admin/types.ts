@@ -18,6 +18,7 @@ export interface GeneralSettings {
   is_singleton: boolean
   site_name: string
   linkedin_url: string
+  github_url?: string
   instagram_url: string
   portfolio_url: string
   email: string
@@ -44,7 +45,7 @@ export interface CvDocument {
   updated_at: string
 }
 
-export type SectionKey = 'services' | 'experience' | 'work' | 'results' | 'testimonials'
+export type SectionKey = 'services' | 'experience' | 'work' | 'results' | 'testimonials' | string
 
 export interface SectionContent {
   id: string
@@ -80,7 +81,17 @@ export interface ExperienceItem {
   updated_at: string
 }
 
-export type ProjectCategory = 'Meta Ads' | 'SEO' | 'Branding' | 'Google Ads' | 'Funnels' | 'Ads'
+export type ProjectCategory =
+  | 'Meta Ads'
+  | 'SEO'
+  | 'Branding'
+  | 'Google Ads'
+  | 'Funnels'
+  | 'Ads'
+  | 'Web App'
+  | 'Full-Stack'
+  | 'Frontend'
+  | string
 
 export interface PortfolioProjectItem {
   id: string
@@ -140,8 +151,6 @@ export type AdminTab =
   | 'services'
   | 'experiences'
   | 'projects'
-  | 'testimonials'
   | 'skills'
-  | 'stats'
   | 'sections'
   | 'messages'

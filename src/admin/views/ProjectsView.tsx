@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   Plus,
+  Minus,
+  X,
   ArrowUp,
   ArrowDown,
   Edit2,
@@ -9,21 +11,55 @@ import {
   FolderGit2,
   CheckCircle2,
   ExternalLink,
+  Video,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import type { PortfolioProjectItem, ProjectCategory } from '../types'
+import type { PortfolioProjectItem } from '../types'
 import { MediaUploader } from '../components/MediaUploader'
 import { DeleteDialog } from '../components/DeleteDialog'
 import { formatSupabaseError } from '../utils/error'
+import { isVideoMedia, parseProjectLinks } from '../../components/ProjectCard'
 
-const CATEGORIES: ProjectCategory[] = [
+function GithubIcon({ className = 'h-3.5 w-3.5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+      />
+    </svg>
+  )
+}
+
+const DEFAULT_CATEGORIES: string[] = [
   'Meta Ads',
   'SEO',
   'Branding',
   'Google Ads',
   'Funnels',
   'Ads',
+  'Web App',
+  'Full-Stack',
+  'Frontend',
 ]
+
+const CATEGORY_STORAGE_KEY = 'sahalshad_portfolio_categories'
+
+function getInitialCategories(): string[] {
+  try {
+    const saved = localStorage.getItem(CATEGORY_STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+      }
+    }
+  } catch {
+    // Ignore error
+  }
+  return DEFAULT_CATEGORIES
+}
 
 export function ProjectsView() {
   const [projects, setProjects] = useState<PortfolioProjectItem[]>([])
@@ -35,6 +71,16 @@ export function ProjectsView() {
   const [isEditing, setIsEditing] = useState(false)
   const [activeItem, setActiveItem] = useState<Partial<PortfolioProjectItem> | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Dev & Link fields (Live URL, GitHub URL, Tech Stack)
+  const [liveUrl, setLiveUrl] = useState('')
+  const [githubUrl, setGithubUrl] = useState('')
+  const [techStackInput, setTechStackInput] = useState('')
+
+  // Dynamic Categories state
+  const [categoriesList, setCategoriesList] = useState<string[]>(getInitialCategories)
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
+  const [newCategoryInput, setNewCategoryInput] = useState('')
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<PortfolioProjectItem | null>(null)
@@ -50,7 +96,18 @@ export function ProjectsView() {
         .order('sort_order', { ascending: true })
 
       if (error) throw error
-      setProjects((data as PortfolioProjectItem[]) || [])
+      const list = (data as PortfolioProjectItem[]) || []
+      setProjects(list)
+
+      // Merge any category present in projects
+      const projectCats = list.map((p) => p.category).filter(Boolean)
+      setCategoriesList((prev) => {
+        const merged = Array.from(new Set([...prev, ...projectCats]))
+        try {
+          localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(merged))
+        } catch {}
+        return merged
+      })
     } catch (err: unknown) {
       setErrorMessage(formatSupabaseError(err))
     } finally {
@@ -62,11 +119,46 @@ export function ProjectsView() {
     loadProjects()
   }, [])
 
+  function handleAddCategory() {
+    const trimmed = newCategoryInput.trim()
+    if (!trimmed) return
+
+    let updated = categoriesList
+    if (!categoriesList.includes(trimmed)) {
+      updated = [...categoriesList, trimmed]
+      setCategoriesList(updated)
+      try {
+        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(updated))
+      } catch {}
+    }
+
+    if (activeItem) {
+      setActiveItem({ ...activeItem, category: trimmed })
+    }
+    setNewCategoryInput('')
+    setIsAddingCategory(false)
+  }
+
+  function handleRemoveCategory() {
+    const current = activeItem?.category || categoriesList[0]
+    if (!current || categoriesList.length <= 1) return
+
+    const updated = categoriesList.filter((cat) => cat !== current)
+    setCategoriesList(updated)
+    try {
+      localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(updated))
+    } catch {}
+
+    if (activeItem) {
+      setActiveItem({ ...activeItem, category: updated[0] || 'Meta Ads' })
+    }
+  }
+
   function openCreate() {
     const nextOrder = projects.length > 0 ? Math.max(...projects.map((p) => p.sort_order)) + 1 : 1
     setActiveItem({
       project_title: '',
-      category: 'Meta Ads',
+      category: categoriesList[0] || 'Meta Ads',
       description: '',
       results: '',
       image_url: '',
@@ -74,11 +166,20 @@ export function ProjectsView() {
       sort_order: nextOrder,
       is_active: true,
     })
+    setLiveUrl('')
+    setGithubUrl('')
+    setTechStackInput('')
+    setIsAddingCategory(false)
+    setNewCategoryInput('')
     setIsEditing(true)
   }
 
   function openEdit(item: PortfolioProjectItem) {
     setActiveItem(item)
+    const parsed = parseProjectLinks(item.external_link)
+    setLiveUrl(parsed.liveUrl || '')
+    setGithubUrl(parsed.githubUrl || '')
+    setTechStackInput(parsed.techStack.join(', '))
     setIsEditing(true)
   }
 
@@ -88,6 +189,13 @@ export function ProjectsView() {
 
     setIsSaving(true)
     setErrorMessage('')
+
+    // Encode liveUrl, githubUrl, and techStack into external_link cleanly
+    const linkParts: string[] = []
+    if (liveUrl.trim()) linkParts.push(liveUrl.trim())
+    if (githubUrl.trim()) linkParts.push(githubUrl.trim())
+    if (techStackInput.trim()) linkParts.push(techStackInput.trim())
+    const combinedExternalLink = linkParts.join(' | ')
 
     try {
       if (activeItem.id) {
@@ -99,7 +207,7 @@ export function ProjectsView() {
             description: activeItem.description || '',
             results: activeItem.results || '',
             image_url: activeItem.image_url || '',
-            external_link: activeItem.external_link || '',
+            external_link: combinedExternalLink,
             sort_order: activeItem.sort_order ?? 0,
             is_active: activeItem.is_active ?? true,
           })
@@ -115,7 +223,7 @@ export function ProjectsView() {
             description: activeItem.description || '',
             results: activeItem.results || '',
             image_url: activeItem.image_url || '',
-            external_link: activeItem.external_link || '',
+            external_link: combinedExternalLink,
             sort_order: activeItem.sort_order ?? 0,
             is_active: activeItem.is_active ?? true,
           },
@@ -284,50 +392,100 @@ export function ProjectsView() {
                 </div>
 
                 {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={item.project_title}
-                    className="h-14 w-20 rounded-xl border border-zinc-800 object-cover shrink-0"
-                  />
+                  isVideoMedia(item.image_url) ? (
+                    <div className="relative h-14 w-20 rounded-xl border border-zinc-800 bg-black overflow-hidden flex items-center justify-center shrink-0">
+                      <video
+                        src={item.image_url}
+                        className="h-full w-full object-cover"
+                        muted
+                        playsInline
+                      />
+                      <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 text-[9px] font-mono text-emerald-400 flex items-center gap-0.5">
+                        <Video className="h-2.5 w-2.5" />
+                        <span>VIDEO</span>
+                      </span>
+                    </div>
+                  ) : (
+                    <img
+                      src={item.image_url}
+                      alt={item.project_title}
+                      className="h-14 w-20 rounded-xl border border-zinc-800 object-cover shrink-0"
+                    />
+                  )
                 ) : (
                   <div className="h-14 w-20 rounded-xl border border-zinc-800 bg-zinc-950 flex items-center justify-center shrink-0 text-zinc-600">
                     <FolderGit2 className="h-6 w-6" />
                   </div>
                 )}
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-white">{item.project_title}</span>
-                    <span className="rounded-full border border-violet-500/20 bg-violet-950/40 px-2 py-0.5 text-[10px] font-medium text-violet-300">
-                      {item.category}
-                    </span>
-                    {!item.is_active ? (
-                      <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
-                        Inactive
-                      </span>
-                    ) : (
-                      <span className="rounded-full border border-emerald-500/20 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-xs text-zinc-300 font-medium">{item.results}</p>
-                  <p className="mt-0.5 text-xs text-zinc-500 line-clamp-1">{item.description}</p>
-                </div>
+                {(() => {
+                  const parsed = parseProjectLinks(item.external_link)
+                  return (
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-white">{item.project_title}</span>
+                        <span className="rounded-full border border-violet-500/20 bg-violet-950/40 px-2 py-0.5 text-[10px] font-medium text-violet-300">
+                          {item.category}
+                        </span>
+                        {!item.is_active ? (
+                          <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                            Inactive
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-emerald-500/20 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-xs text-zinc-300 font-medium">{item.results}</p>
+                      <p className="mt-0.5 text-xs text-zinc-500 line-clamp-1">{item.description}</p>
+                      {parsed.techStack.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {parsed.techStack.map((tech) => (
+                            <span
+                              key={tech}
+                              className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-mono text-zinc-400 border border-zinc-700/50"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
 
               <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                {item.external_link ? (
-                  <a
-                    href={item.external_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-2 text-zinc-400 hover:text-white"
-                    title="Open external link"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                ) : null}
+                {(() => {
+                  const parsed = parseProjectLinks(item.external_link)
+                  return (
+                    <>
+                      {parsed.githubUrl ? (
+                        <a
+                          href={parsed.githubUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 text-zinc-400 hover:text-white"
+                          title="Open GitHub repository"
+                        >
+                          <GithubIcon className="h-4 w-4" />
+                        </a>
+                      ) : null}
+                      {parsed.liveUrl ? (
+                        <a
+                          href={parsed.liveUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 text-zinc-400 hover:text-white"
+                          title="Open Live Preview"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : null}
+                    </>
+                  )
+                })()}
                 <button
                   type="button"
                   onClick={() => handleToggleActive(item)}
@@ -359,11 +517,21 @@ export function ProjectsView() {
 
       {/* Edit / Add Modal */}
       {isEditing && activeItem ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl my-8">
-            <h3 className="text-lg font-semibold text-white">
-              {activeItem.id ? 'Edit Case Study' : 'Add New Case Study'}
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 py-10 sm:py-14 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-xl rounded-3xl border border-zinc-800 bg-zinc-900 p-6 sm:p-7 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+              <h3 className="text-lg font-semibold text-white">
+                {activeItem.id ? 'Edit Project / Case Study' : 'Add New Project'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+                title="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
             <form onSubmit={handleSaveItem} className="mt-5 space-y-4">
               <div>
@@ -380,20 +548,92 @@ export function ProjectsView() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300">Category</label>
-                  <select
-                    value={activeItem.category || 'Meta Ads'}
-                    onChange={(e) =>
-                      setActiveItem({ ...activeItem, category: e.target.value as ProjectCategory })
-                    }
-                    className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-zinc-300">Category</label>
+                    <span className="text-[10px] text-zinc-500 font-mono">
+                      {categoriesList.length} options
+                    </span>
+                  </div>
+
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <select
+                      value={activeItem.category || categoriesList[0] || 'Meta Ads'}
+                      onChange={(e) =>
+                        setActiveItem({ ...activeItem, category: e.target.value })
+                      }
+                      className="flex-1 rounded-2xl border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-violet-500 min-w-0"
+                    >
+                      {categoriesList.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Minus (-) button to remove currently selected category */}
+                    <button
+                      type="button"
+                      onClick={handleRemoveCategory}
+                      disabled={categoriesList.length <= 1}
+                      title={`Remove "${activeItem.category || categoriesList[0]}" from categories`}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-red-900/60 hover:bg-red-950/30 hover:text-red-400 transition disabled:opacity-30 disabled:pointer-events-none shrink-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+
+                    {/* Plus (+) button to add new category */}
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingCategory(!isAddingCategory)}
+                      title="Add custom category"
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl border transition shrink-0 ${
+                        isAddingCategory
+                          ? 'border-violet-500 bg-violet-600 text-white'
+                          : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-violet-500/50 hover:bg-violet-950/30 hover:text-violet-300'
+                      }`}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Inline Add Category Input */}
+                  {isAddingCategory && (
+                    <div className="mt-2 p-2 rounded-xl border border-violet-500/30 bg-violet-950/20 space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={newCategoryInput}
+                          onChange={(e) => setNewCategoryInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleAddCategory()
+                            }
+                          }}
+                          placeholder="e.g. Web App, SaaS, Branding..."
+                          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-violet-400 min-w-0"
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddCategory}
+                          className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500 transition shrink-0"
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingCategory(false)
+                            setNewCategoryInput('')
+                          }}
+                          className="rounded-lg border border-zinc-700 bg-zinc-800 p-1.5 text-xs text-zinc-400 hover:text-white shrink-0"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -432,22 +672,61 @@ export function ProjectsView() {
                 />
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300">Live Website / Demo URL (Optional)</label>
+                  <input
+                    type="url"
+                    value={liveUrl}
+                    onChange={(e) => setLiveUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-xs text-white outline-none focus:border-violet-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300">GitHub Repository URL (Optional)</label>
+                  <input
+                    type="url"
+                    value={githubUrl}
+                    onChange={(e) => setGithubUrl(e.target.value)}
+                    placeholder="https://github.com/..."
+                    className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-xs text-white outline-none focus:border-violet-500 font-mono"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-semibold text-zinc-300">External Case Study URL (Optional)</label>
+                <label className="block text-xs font-semibold text-zinc-300">
+                  Tech Stack (Optional, comma-separated)
+                </label>
                 <input
-                  type="url"
-                  value={activeItem.external_link || ''}
-                  onChange={(e) => setActiveItem({ ...activeItem, external_link: e.target.value })}
-                  placeholder="https://..."
-                  className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
+                  type="text"
+                  value={techStackInput}
+                  onChange={(e) => setTechStackInput(e.target.value)}
+                  placeholder="e.g. React, TypeScript, Supabase, Tailwind CSS"
+                  className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-xs text-white outline-none focus:border-violet-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300">
+                  Project Media URL (Photo or Video URL / Embed)
+                </label>
+                <input
+                  type="text"
+                  value={activeItem.image_url || ''}
+                  onChange={(e) => setActiveItem({ ...activeItem, image_url: e.target.value })}
+                  placeholder="Paste direct image/video URL, YouTube, Vimeo, Loom or upload below..."
+                  className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500 font-mono text-xs"
                 />
               </div>
 
               <MediaUploader
                 folder="projects"
                 currentUrl={activeItem.image_url}
-                label="Project Cover Image (site-media/projects)"
-                allowedTypes={['image']}
+                label="Or Upload Project Media (Photo or Video up to 15 MB)"
+                allowedTypes={['image', 'video']}
                 onUploadSuccess={(url) => setActiveItem({ ...activeItem, image_url: url })}
               />
 

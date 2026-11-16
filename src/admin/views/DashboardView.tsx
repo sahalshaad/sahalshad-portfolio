@@ -4,7 +4,7 @@ import {
   FolderGit2,
   Sparkles,
   Briefcase,
-  MessageSquareQuote,
+  Tags,
   Loader2,
   ArrowRight,
   Clock,
@@ -23,13 +23,13 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
     projects: number
     services: number
     experiences: number
-    testimonials: number
+    skills: number
     messages: number
   }>({
     projects: 0,
     services: 0,
     experiences: 0,
-    testimonials: 0,
+    skills: 0,
     messages: 0,
   })
   const [recentMessages, setRecentMessages] = useState<ContactMessageItem[]>([])
@@ -42,12 +42,12 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
       setErrorMessage('')
 
       try {
-        const [projectsRes, servicesRes, expRes, testRes, msgCountRes, latestMsgRes] =
+        const [projectsRes, servicesRes, expRes, skillsRes, msgCountRes, latestMsgRes] =
           await Promise.all([
             supabase.from('portfolio_projects').select('id', { count: 'exact', head: true }),
             supabase.from('services').select('id', { count: 'exact', head: true }),
             supabase.from('experiences').select('id', { count: 'exact', head: true }),
-            supabase.from('testimonials').select('id', { count: 'exact', head: true }),
+            supabase.from('skill_tags').select('id', { count: 'exact', head: true }),
             supabase.from('contact_messages').select('id', { count: 'exact', head: true }),
             supabase
               .from('contact_messages')
@@ -64,7 +64,7 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
           projects: projectsRes.count || 0,
           services: servicesRes.count || 0,
           experiences: expRes.count || 0,
-          testimonials: testRes.count || 0,
+          skills: skillsRes.count || 0,
           messages: msgCountRes.count || 0,
         })
 
@@ -158,15 +158,15 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
 
         <button
           type="button"
-          onClick={() => onNavigate('testimonials')}
-          className="text-left rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-rose-500/40 hover:bg-zinc-900"
+          onClick={() => onNavigate('skills')}
+          className="text-left rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-violet-500/40 hover:bg-zinc-900"
         >
-          <div className="flex items-center justify-between text-rose-400">
-            <MessageSquareQuote className="h-5 w-5" />
-            <span className="text-xs font-semibold text-zinc-500">Reviews</span>
+          <div className="flex items-center justify-between text-violet-400">
+            <Tags className="h-5 w-5" />
+            <span className="text-xs font-semibold text-zinc-500">Stack</span>
           </div>
-          <p className="mt-3 text-2xl font-bold text-white">{counts.testimonials}</p>
-          <p className="text-xs text-zinc-400 mt-1">Testimonials</p>
+          <p className="mt-3 text-2xl font-bold text-white">{counts.skills}</p>
+          <p className="text-xs text-zinc-400 mt-1">Tech & Skills</p>
         </button>
       </div>
 

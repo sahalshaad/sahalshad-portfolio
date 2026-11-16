@@ -1,0 +1,40 @@
+# ==============================================================
+# Robots.txt for sahalshad.com
+# Optimized for Google, Bing, and AI Search Engines (AEO)
+# ==============================================================
+
+# Search Engines (Google, Bing, Yahoo, DuckDuckGo)
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+
+# Dedicated AI Answer Engines & LLM Crawlers (AEO)
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# Sitemap & LLM Definitions
+Sitemap: https://sahalshad.com/sitemap.xml
+Host: https://sahalshad.com

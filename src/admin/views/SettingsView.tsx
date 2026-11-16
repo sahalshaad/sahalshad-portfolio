@@ -9,6 +9,7 @@ export function SettingsView() {
   const [settings, setSettings] = useState<Partial<GeneralSettings>>({
     site_name: '',
     linkedin_url: '',
+    github_url: '',
     instagram_url: '',
     portfolio_url: '',
     email: '',
@@ -65,10 +66,26 @@ export function SettingsView() {
     setSuccessMessage('')
 
     try {
-      const [settingsRes, contactRes, cvRes] = await Promise.all([
-        supabase
+      let settingsPayload = { ...settings, is_singleton: true }
+      let settingsRes = await supabase
+        .from('general_settings')
+        .upsert(settingsPayload, { onConflict: 'is_singleton' })
+
+      if (settingsRes.error && settingsRes.error.message?.includes('github_url')) {
+        // If column github_url not added yet, save remaining fields and warn user
+        const { github_url: _, ...fallbackPayload } = settingsPayload
+        settingsRes = await supabase
           .from('general_settings')
-          .upsert({ ...settings, is_singleton: true }, { onConflict: 'is_singleton' }),
+          .upsert(fallbackPayload, { onConflict: 'is_singleton' })
+
+        setErrorMessage(
+          'Settings saved, but to store GitHub URL, please run this in the Supabase SQL Editor: alter table public.general_settings add column if not exists github_url text default \'\';'
+        )
+      } else if (settingsRes.error) {
+        throw settingsRes.error
+      }
+
+      const [contactRes, cvRes] = await Promise.all([
         supabase
           .from('contact_section')
           .upsert({ ...contactSection, is_singleton: true }, { onConflict: 'is_singleton' }),
@@ -77,7 +94,6 @@ export function SettingsView() {
           .upsert({ ...cvDoc, is_singleton: true }, { onConflict: 'is_singleton' }),
       ])
 
-      if (settingsRes.error) throw settingsRes.error
       if (contactRes.error) throw contactRes.error
       if (cvRes.error) throw cvRes.error
 
@@ -125,7 +141,7 @@ export function SettingsView() {
         <div className="space-y-4 rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
           <h2 className="text-base font-semibold text-white">General & Social Media</h2>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="block text-xs font-semibold text-zinc-300">Site Brand Name</label>
               <input
@@ -146,16 +162,38 @@ export function SettingsView() {
                 className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300">Phone / WhatsApp Number</label>
+              <input
+                type="text"
+                placeholder="+91..."
+                value={settings.phone_number || ''}
+                onChange={(e) => setSettings({ ...settings, phone_number: e.target.value })}
+                className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
+              />
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-zinc-300">LinkedIn URL</label>
+              <label className="block text-xs font-semibold text-zinc-300">LinkedIn Profile URL</label>
               <input
                 type="url"
                 value={settings.linkedin_url || ''}
                 onChange={(e) => setSettings({ ...settings, linkedin_url: e.target.value })}
-                placeholder="https://linkedin.com/in/..."
+                placeholder="https://linkedin.com/in/sahalshad"
+                className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300">GitHub Profile URL</label>
+              <input
+                type="url"
+                value={settings.github_url || ''}
+                onChange={(e) => setSettings({ ...settings, github_url: e.target.value })}
+                placeholder="https://github.com/sahalshaad"
                 className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
               />
             </div>

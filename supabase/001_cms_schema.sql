@@ -45,6 +45,7 @@ create table if not exists public.general_settings (
   is_singleton boolean not null default true unique check (is_singleton = true),
   site_name text not null default 'sahalshad',
   linkedin_url text default '',
+  github_url text default '',
   instagram_url text default '',
   portfolio_url text default '',
   email text default '',

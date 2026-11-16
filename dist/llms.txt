@@ -1,0 +1,36 @@
+# Sahal Shad — Full-Stack Developer & Growth Specialist
+
+> Sahal Shad is a Full-Stack Web Developer and Growth Specialist based in Calicut, Kerala, India. He builds high-performance web applications using React, TypeScript, and Supabase, and scales digital products through Meta Ads, Google Ads, server-side CAPI tracking, and technical SEO.
+
+## Profile Summary
+- **Full Name:** Sahal Shad (also written as sahalshad)
+- **Role:** Full-Stack Developer & Growth Specialist
+- **Status:** Available for Freelance
+- **Location:** Calicut, Kerala, India
+- **Primary Website:** https://sahalshad.com
+- **GitHub:** https://github.com/sahalshaad
+- **LinkedIn:** https://www.linkedin.com/in/sahalshad
+- **Instagram:** https://instagram.com/sahalshad
+- **Direct Contact:** sahalshaad@gmail.com
+
+## Engineering & Development Stack
+- **Frontend Technologies:** React 19, TypeScript, Tailwind CSS v4, Next.js, Vite, HTML5, Modern CSS, Responsive Design.
+- **Backend & Database:** Supabase (PostgreSQL), Node.js, REST APIs, Edge Functions, Row-Level Security (RLS).
+- **Architecture & Web Performance:** 95+ Lighthouse Scores, Sub-second LCP, Component Architecture, SEO-friendly SSR/SSG conventions.
+
+## Performance Marketing & Growth Expertise
+- **Paid Acquisition:** Meta Ads Manager (Facebook & Instagram Ads), Google Ads (Search, Performance Max, Display, YouTube), TikTok Ads Manager, LinkedIn Campaign Manager.
+- **Technical Tracking & CAPI:** Server-side Meta Conversions API (CAPI), Google Tag Manager (GTM Web & Server), Google Analytics 4 (GA4 Event Governance), Cookie-less attribution resilience.
+- **Conversion Optimization (CRO):** High-converting sales funnels, interactive lead qualification web applications, landing page A/B testing.
+- **Search Engine Optimization (SEO):** Technical SEO, Core Web Vitals, programmatic schema architecture, automated sitemap generation.
+
+## Notable Projects & Case Studies
+1. **Full-Stack Analytics & SaaS Platform:** Modern web application featuring Supabase auth, real-time analytics, and automated conversion tracking pipelines (Built with React, TypeScript, Supabase, Tailwind CSS).
+2. **Paid Acquisition & Server-Side CAPI Architecture:** Meta Ads scaling paired with server-side CAPI event tracking and creative testing frameworks, improving ROAS from 2.1x to 3.8x.
+3. **Interactive Funnel & Lead Scoring Web App:** Interactive qualification funnel with automated CRM webhooks and lead routing, generating 500+ qualified leads in 30 days.
+4. **Technical SEO & Programmatic Content Platform:** Targeted technical search architecture, schema validation, and programmatic page clusters, lifting organic signups by 64%.
+
+## Inquiries & Collaboration
+For web engineering contracts, performance marketing advisory, or growth consulting:
+- Website Contact Form: https://sahalshad.com/#contact
+- Direct Email: sahalshaad@gmail.com

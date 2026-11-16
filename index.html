@@ -2,13 +2,85 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/pixo.sahal.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sahal Shad | Full-Stack Developer &amp; Growth Specialist</title>
+    
+    <!-- Core SEO Meta Tags -->
     <meta
       name="description"
-      content="Sahalshad is a Digital Marketing Specialist focused on SEO, lead generation, and performance marketing. Explore proven strategies, real projects, and results-driven campaigns."
+      content="Sahal Shad is a Full-Stack Developer and Growth Specialist based in Calicut, Kerala. Building high-performance web applications with React, TypeScript, and Supabase, and scaling brands through paid acquisition and technical SEO."
     />
-    <title>sahalshad — Digital Marketing Portfolio</title>
+    <meta
+      name="keywords"
+      content="Sahal Shad, sahalshad, Full-Stack Developer, Growth Specialist, React Developer Calicut, Web Developer Kerala, Supabase, Performance Marketing, Meta Ads Expert, Technical SEO, Conversion Rate Optimization"
+    />
+    <meta name="author" content="Sahal Shad" />
+    <link rel="canonical" href="https://sahalshad.com/" />
+    
+    <!-- Search Engine & Crawler Directives -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+    <!-- Local / Geographic SEO Meta Tags -->
+    <meta name="geo.region" content="IN-KL" />
+    <meta name="geo.placename" content="Calicut, Kerala, India" />
+    <meta name="geo.position" content="11.2588;75.7804" />
+    <meta name="ICBM" content="11.2588, 75.7804" />
+
+    <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content="Sahal Shad | Full-Stack Developer &amp; Growth Specialist" />
+    <meta
+      property="og:description"
+      content="Full-Stack Web Developer and Growth Specialist based in Calicut, Kerala. Building high-performance web apps with React &amp; Supabase, and scaling brands through performance marketing and technical SEO."
+    />
+    <meta property="og:url" content="https://sahalshad.com/" />
+    <meta property="og:site_name" content="Sahal Shad" />
+    <meta property="og:image" content="https://sahalshad.com/profile-photo.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sahal Shad - Full-Stack Developer &amp; Growth Specialist" />
+    <meta property="profile:first_name" content="Sahal" />
+    <meta property="profile:last_name" content="Shad" />
+    <meta property="profile:username" content="sahalshaad" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sahal Shad | Full-Stack Developer &amp; Growth Specialist" />
+    <meta
+      name="twitter:description"
+      content="Full-Stack Web Developer &amp; Growth Specialist based in Calicut, Kerala. React, TypeScript, Supabase, Meta Ads, and Technical SEO."
+    />
+    <meta name="twitter:image" content="https://sahalshad.com/profile-photo.png" />
+    <meta name="twitter:creator" content="@sahalshad" />
+
+    <!-- Icons & Manifest -->
+    <link rel="icon" type="image/png" href="/pixo.sahal.png" />
+    <link rel="apple-touch-icon" href="/profile-photo.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0C0A09" />
+
+    <!-- Instant Theme Detection (zero flash) -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('theme');
+          var isDark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute('content', isDark ? '#0C0A09' : '#FAFAF9');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Google Analytics -->
     <script
       async
@@ -21,6 +93,119 @@
       }
       gtag("js", new Date());
       gtag("config", "G-25WKD4JFBX");
+    </script>
+
+    <!-- JSON-LD Structured Data Schema (Google Search & AEO / AI Engine Citations) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://sahalshad.com/#website",
+          "url": "https://sahalshad.com/",
+          "name": "Sahal Shad",
+          "alternateName": ["sahalshad", "Sahal Shad Portfolio"],
+          "description": "Portfolio of Sahal Shad — Full-Stack Developer & Growth Specialist.",
+          "publisher": {
+            "@id": "https://sahalshad.com/#person"
+          },
+          "inLanguage": "en-US"
+        },
+        {
+          "@type": "ProfilePage",
+          "@id": "https://sahalshad.com/#webpage",
+          "url": "https://sahalshad.com/",
+          "name": "Sahal Shad | Full-Stack Developer & Growth Specialist",
+          "isPartOf": {
+            "@id": "https://sahalshad.com/#website"
+          },
+          "about": {
+            "@id": "https://sahalshad.com/#person"
+          },
+          "mainEntity": {
+            "@id": "https://sahalshad.com/#person"
+          },
+          "description": "Full-Stack Developer and Growth Specialist specializing in React, TypeScript, Supabase, high-ROAS paid acquisition, and technical SEO."
+        },
+        {
+          "@type": "Person",
+          "@id": "https://sahalshad.com/#person",
+          "name": "Sahal Shad",
+          "alternateName": ["sahalshad", "Sahalshaad"],
+          "url": "https://sahalshad.com/",
+          "image": "https://sahalshad.com/profile-photo.png",
+          "jobTitle": ["Full-Stack Developer", "Growth Specialist", "Performance Marketer"],
+          "description": "Full-Stack Developer and Growth Specialist who builds production web applications with React and Supabase, and scales digital revenue through Meta & Google Ads, server-side CAPI tracking, and technical SEO.",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Calicut",
+            "addressRegion": "Kerala",
+            "addressCountry": "IN"
+          },
+          "sameAs": [
+            "https://github.com/sahalshaad",
+            "https://www.linkedin.com/in/sahalshad",
+            "https://instagram.com/sahalshad"
+          ],
+          "knowsAbout": [
+            "Full-Stack Web Development",
+            "React",
+            "TypeScript",
+            "Tailwind CSS",
+            "Supabase",
+            "PostgreSQL",
+            "Node.js",
+            "Vite",
+            "Meta Ads",
+            "Google Ads",
+            "Server-Side Conversions API (CAPI)",
+            "Google Tag Manager",
+            "Technical SEO",
+            "Core Web Vitals",
+            "Conversion Rate Optimization (CRO)"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://sahalshad.com/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Who is Sahal Shad?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sahal Shad is a Full-Stack Developer and Growth Specialist based in Calicut, Kerala, India. He builds high-performance web applications using React, TypeScript, and Supabase, and accelerates business growth through Meta Ads, Google Ads, server-side CAPI tracking, and technical SEO."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What services does Sahal Shad provide?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sahal Shad provides end-to-end digital solutions including Full-Stack Web Development (React, TypeScript, Supabase, Tailwind CSS), Paid Growth & Performance Marketing (Meta & Google Ads campaigns), Technical Tracking & CAPI integration, and Search Engine Optimization (SEO & Core Web Vitals)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What technical stack does Sahal Shad use?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sahal Shad's engineering stack includes React 19, TypeScript, Tailwind CSS v4, Supabase (PostgreSQL), Vite, Node.js, and modern REST APIs. For growth and analytics, he utilizes Meta Ads Manager, Google Ads, Google Tag Manager (GTM Web & Server), Google Analytics 4 (GA4), and Figma."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How can I contact Sahal Shad for web development or growth consulting?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "You can contact Sahal Shad directly via the contact form on his website at https://sahalshad.com/#contact or by emailing sahalshaad@gmail.com."
+              }
+            }
+          ]
+        }
+      ]
+    }
     </script>
   </head>
   <body>

@@ -8,9 +8,7 @@ import { SettingsView } from './views/SettingsView'
 import { ServicesView } from './views/ServicesView'
 import { ExperienceView } from './views/ExperienceView'
 import { ProjectsView } from './views/ProjectsView'
-import { TestimonialsView } from './views/TestimonialsView'
 import { SkillsView } from './views/SkillsView'
-import { StatsView } from './views/StatsView'
 import { SectionHeadingsView } from './views/SectionHeadingsView'
 import { MessagesView } from './views/MessagesView'
 
@@ -32,9 +30,7 @@ export default function AdminApp() {
           {activeTab === 'services' && <ServicesView />}
           {activeTab === 'experiences' && <ExperienceView />}
           {activeTab === 'projects' && <ProjectsView />}
-          {activeTab === 'testimonials' && <TestimonialsView />}
           {activeTab === 'skills' && <SkillsView />}
-          {activeTab === 'stats' && <StatsView />}
           {activeTab === 'sections' && <SectionHeadingsView />}
           {activeTab === 'messages' && <MessagesView />}
         </AdminLayout>

@@ -8,13 +8,14 @@ interface MediaUploaderProps {
   currentUrl?: string
   onUploadSuccess: (publicUrl: string) => void
   label?: string
-  allowedTypes?: ('image' | 'pdf')[]
+  allowedTypes?: ('image' | 'video' | 'pdf')[]
 }
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+const MAX_FILE_SIZE = 15 * 1024 * 1024 // 15 MB to accommodate short videos
 
 const VALID_MIME_TYPES: Record<string, string[]> = {
   image: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+  video: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
   pdf: ['application/pdf'],
 }
 
@@ -23,7 +24,7 @@ export function MediaUploader({
   currentUrl,
   onUploadSuccess,
   label = 'Upload Media',
-  allowedTypes = ['image', 'pdf'],
+  allowedTypes = ['image', 'video', 'pdf'],
 }: MediaUploaderProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -31,6 +32,12 @@ export function MediaUploader({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isPdf = previewUrl.endsWith('.pdf') || previewUrl.includes('/cv/')
+  const isVideo =
+    previewUrl.endsWith('.mp4') ||
+    previewUrl.endsWith('.webm') ||
+    previewUrl.endsWith('.mov') ||
+    previewUrl.endsWith('.ogg') ||
+    previewUrl.includes('/video')
 
   async function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -106,6 +113,13 @@ export function MediaUploader({
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-950/40 text-red-400">
               <FileText className="h-6 w-6" />
             </div>
+          ) : isVideo ? (
+            <video
+              src={previewUrl}
+              className="h-12 w-12 rounded-xl border border-zinc-800 object-cover"
+              muted
+              playsInline
+            />
           ) : (
             <img
               src={previewUrl}
@@ -116,7 +130,9 @@ export function MediaUploader({
 
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-mono text-zinc-300">{previewUrl}</p>
-            <p className="text-[11px] text-zinc-500">{isPdf ? 'PDF Document' : 'Image File'}</p>
+            <p className="text-[11px] text-zinc-500">
+              {isPdf ? 'PDF Document' : isVideo ? 'Video File' : 'Image File'}
+            </p>
           </div>
 
           <button
@@ -162,7 +178,9 @@ export function MediaUploader({
           )}
         </label>
 
-        <span className="text-[11px] text-zinc-500">Max 5 MB • PNG, JPG, WebP, SVG, PDF</span>
+        <span className="text-[11px] text-zinc-500">
+          Photo (PNG, JPG, WebP, SVG) or Video (MP4, WebM) • Max 15 MB
+        </span>
       </div>
 
       {errorMessage ? (
