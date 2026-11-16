@@ -106,25 +106,7 @@ type CmsPayload = {
   }
 }
 
-const DEFAULT_LOCAL_API_ORIGIN = 'http://127.0.0.1:8000'
-const DEFAULT_HERO_IMAGE = '/media/hero/IMG_1448.JPG'
-
-function getApiBaseUrl() {
-  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
-  if (configuredBaseUrl) {
-    return configuredBaseUrl
-  }
-
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return window.location.port === '8000' ? '/api' : `${DEFAULT_LOCAL_API_ORIGIN}/api`
-  }
-
-  return '/api'
-}
-
-function apiUrl(path: string) {
-  return `${getApiBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`
-}
+const DEFAULT_HERO_IMAGE = '/profile-photo.png'
 
 function App() {
   const prefersReducedMotion = useReducedMotion()
@@ -158,24 +140,143 @@ function App() {
 
   useEffect(() => {
     let mounted = true
-    fetch(apiUrl('/portfolio-content/'), { credentials: 'include' })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to load CMS content')
+
+    async function loadPortfolioContent() {
+      try {
+        const [
+          heroRes,
+          settingsRes,
+          contactRes,
+          cvRes,
+          sectionsRes,
+          servicesRes,
+          experiencesRes,
+          projectsRes,
+          testimonialsRes,
+          skillsRes,
+          statsRes,
+        ] = await Promise.all([
+          supabase.from('hero_section').select('*').eq('is_active', true).maybeSingle(),
+          supabase.from('general_settings').select('*').eq('is_active', true).maybeSingle(),
+          supabase.from('contact_section').select('*').eq('is_active', true).maybeSingle(),
+          supabase.from('cv_document').select('*').eq('is_active', true).maybeSingle(),
+          supabase.from('section_contents').select('*').eq('is_active', true),
+          supabase.from('services').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+          supabase.from('experiences').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+          supabase.from('portfolio_projects').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+          supabase.from('testimonials').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+          supabase.from('skill_tags').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+          supabase.from('result_stats').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+        ])
+
+        if (!mounted) return
+
+        const sectionMap: Record<string, { eyebrow: string; title: string; subtitle: string }> = {}
+        if (sectionsRes.data) {
+          for (const row of sectionsRes.data) {
+            if (row.section_key) {
+              sectionMap[row.section_key] = {
+                eyebrow: row.eyebrow || '',
+                title: row.title || '',
+                subtitle: row.subtitle || '',
+              }
+            }
+          }
         }
-        return res.json()
-      })
-      .then((data: CmsPayload) => {
+
+        const payload: CmsPayload = {
+          hero: heroRes.data
+            ? {
+                name: heroRes.data.name,
+                title: heroRes.data.title,
+                description: heroRes.data.description,
+                profile_image_url: heroRes.data.profile_image_url || '',
+                cta_primary_text: heroRes.data.cta_primary_text || '',
+                cta_primary_link: heroRes.data.cta_primary_link || '',
+                cta_secondary_text: heroRes.data.cta_secondary_text || '',
+                cta_secondary_link: heroRes.data.cta_secondary_link || '',
+              }
+            : undefined,
+          settings: settingsRes.data
+            ? {
+                site_name: settingsRes.data.site_name || '',
+                linkedin_url: settingsRes.data.linkedin_url || '',
+                instagram_url: settingsRes.data.instagram_url || '',
+                portfolio_url: settingsRes.data.portfolio_url || '',
+                email: settingsRes.data.email || '',
+                phone_number: settingsRes.data.phone_number || '',
+              }
+            : undefined,
+          contact: contactRes.data
+            ? {
+                heading: contactRes.data.heading,
+                description: contactRes.data.description,
+              }
+            : undefined,
+          cv: cvRes.data
+            ? {
+                title: cvRes.data.title,
+                file_url: cvRes.data.file_url || '',
+              }
+            : undefined,
+          section_content: sectionMap,
+          services: servicesRes.data && servicesRes.data.length > 0
+            ? servicesRes.data.map((s) => ({
+                service_title: s.service_title,
+                description: s.description,
+                icon_class: s.icon_class || '',
+                icon_image_url: s.icon_image_url || '',
+              }))
+            : undefined,
+          experiences: experiencesRes.data && experiencesRes.data.length > 0
+            ? experiencesRes.data.map((e) => ({
+                job_role: e.job_role,
+                company_name: e.company_name,
+                duration: e.duration,
+                description: e.description,
+              }))
+            : undefined,
+          projects: projectsRes.data && projectsRes.data.length > 0
+            ? projectsRes.data.map((p) => ({
+                project_title: p.project_title,
+                category: p.category,
+                description: p.description,
+                results: p.results,
+                image_url: p.image_url || '',
+                external_link: p.external_link || '',
+              }))
+            : undefined,
+          testimonials: testimonialsRes.data && testimonialsRes.data.length > 0
+            ? testimonialsRes.data.map((t) => ({
+                client_name: t.client_name,
+                designation: t.designation || '',
+                feedback: t.feedback,
+                image_url: t.image_url || '',
+              }))
+            : undefined,
+          skills: skillsRes.data && skillsRes.data.length > 0
+            ? skillsRes.data.map((s) => s.name)
+            : undefined,
+          stats: statsRes.data && statsRes.data.length > 0
+            ? statsRes.data.map((s) => ({
+                label: s.label,
+                value: s.value,
+              }))
+            : undefined,
+        }
+
+        setCmsData(payload)
+      } catch (err) {
+        console.error('Error fetching Supabase CMS content:', err)
+      } finally {
         if (mounted) {
-          setCmsData(data)
           setIsLoading(false)
         }
-      })
-      .catch(() => {
-        if (mounted) {
-          setIsLoading(false)
-        }
-      })
+      }
+    }
+
+    loadPortfolioContent()
+
     return () => {
       mounted = false
     }
