@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { ComponentType, FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import { supabase } from './lib/supabase'
 
 type Experience = {
   role: string
@@ -130,7 +131,8 @@ function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [cmsData, setCmsData] = useState<CmsPayload | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [contactStatus, setContactStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [contactStatus, setContactStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [contactErrorMessage, setContactErrorMessage] = useState('')
 
   const defaultName = 'sahalshad'
   const defaultRole = 'Digital Marketing Specialist'
@@ -383,37 +385,56 @@ function App() {
 
   async function onContactSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setContactStatus('idle')
+    setContactStatus('loading')
+    setContactErrorMessage('')
+
     const formElement = e.currentTarget
     const form = new FormData(formElement)
-    const fullName = String(form.get('name') ?? '')
-    const email = String(form.get('email') ?? '')
-    const projectType = String(form.get('projectType') ?? '')
-    const message = String(form.get('message') ?? '')
+    const fullName = String(form.get('name') ?? '').trim()
+    const email = String(form.get('email') ?? '').trim()
+    const projectType = String(form.get('projectType') ?? '').trim()
+    const rawMessage = String(form.get('message') ?? '').trim()
+
+    // Validation
+    if (!fullName || fullName.length < 2 || fullName.length > 100) {
+      setContactErrorMessage('Please enter a valid name (2-100 characters).')
+      setContactStatus('error')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email || !emailRegex.test(email) || email.length > 255) {
+      setContactErrorMessage('Please enter a valid email address.')
+      setContactStatus('error')
+      return
+    }
+
+    if (!rawMessage || rawMessage.length < 5 || rawMessage.length > 5000) {
+      setContactErrorMessage('Please enter a message (at least 5 characters).')
+      setContactStatus('error')
+      return
+    }
+
+    const message = projectType ? `[${projectType}] ${rawMessage}` : rawMessage
 
     try {
-      const res = await fetch(apiUrl('/contact-submit/'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
+      const { error } = await supabase.from('contact_messages').insert([
+        {
           name: fullName,
           email,
-          projectType,
           message,
-        }),
-      })
+        },
+      ])
 
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Unable to send message')
+      if (error) {
+        throw error
       }
 
       setContactStatus('success')
       formElement.reset()
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unable to send message. Please try again.'
+      setContactErrorMessage(msg)
       setContactStatus('error')
     }
   }
@@ -943,17 +964,18 @@ function App() {
 
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
+                  disabled={contactStatus === 'loading'}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
-                  Send Message
+                  {contactStatus === 'loading' ? 'Sending…' : 'Send Message'}
                   <ArrowRight className="h-4 w-4" />
                 </button>
 
                 {contactStatus === 'success' ? (
-                  <div className="text-xs text-emerald-600">Message sent successfully</div>
+                  <div className="text-xs text-emerald-600">Message sent successfully!</div>
                 ) : null}
                 {contactStatus === 'error' ? (
-                  <div className="text-xs text-red-600">Unable to send message. Please try again.</div>
+                  <div className="text-xs text-red-600">{contactErrorMessage || 'Unable to send message. Please try again.'}</div>
                 ) : null}
               </div>
             </motion.form>

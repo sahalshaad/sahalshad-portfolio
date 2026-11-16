@@ -13,6 +13,7 @@
     "backend:createsuperuser": ".venv/bin/python manage.py createsuperuser"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.2.4",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
