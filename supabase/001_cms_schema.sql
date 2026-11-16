@@ -3,7 +3,7 @@
 -- Supabase CMS Schema for Portfolio & Admin Dashboard
 -- Safe and idempotent: can be executed multiple times without errors.
 --
--- Note: Replace '__ADMIN_EMAIL__' with your actual admin email address.
+-- Note: Admin email configured for sahalshaad@gmail.com
 -- ==============================================================================
 
 create extension if not exists "pgcrypto";
@@ -217,14 +217,14 @@ begin
       using (is_active = true);
     ', t);
 
-    -- Admin policy (authenticated + __ADMIN_EMAIL__ match: full read/write, including inactive)
+    -- Admin policy (authenticated + sahalshaad@gmail.com match: full read/write, including inactive)
     execute format('drop policy if exists "Admin manage all %1$I" on public.%1$I;', t);
     execute format('
       create policy "Admin manage all %1$I" on public.%1$I
       for all
       to authenticated
-      using (auth.jwt() ->> ''email'' = ''__ADMIN_EMAIL__'')
-      with check (auth.jwt() ->> ''email'' = ''__ADMIN_EMAIL__'');
+      using (auth.jwt() ->> ''email'' = ''sahalshaad@gmail.com'')
+      with check (auth.jwt() ->> ''email'' = ''sahalshaad@gmail.com'');
     ', t);
   end loop;
 end $$;
@@ -238,7 +238,7 @@ create policy "Admin read contact_messages"
 on public.contact_messages
 for select
 to authenticated
-using (auth.jwt() ->> 'email' = '__ADMIN_EMAIL__');
+using (auth.jwt() ->> 'email' = 'sahalshaad@gmail.com');
 
 -- Admin delete policy for contact messages
 drop policy if exists "Admin delete contact_messages" on public.contact_messages;
@@ -246,7 +246,7 @@ create policy "Admin delete contact_messages"
 on public.contact_messages
 for delete
 to authenticated
-using (auth.jwt() ->> 'email' = '__ADMIN_EMAIL__');
+using (auth.jwt() ->> 'email' = 'sahalshaad@gmail.com');
 
 -- ------------------------------------------------------------------------------
 -- 6. STORAGE BUCKET & STORAGE RLS POLICIES (site-media)
@@ -282,7 +282,7 @@ for insert
 to authenticated
 with check (
   bucket_id = 'site-media'
-  and (auth.jwt() ->> 'email' = '__ADMIN_EMAIL__')
+  and (auth.jwt() ->> 'email' = 'sahalshaad@gmail.com')
 );
 
 -- Admin update to site-media
@@ -293,7 +293,7 @@ for update
 to authenticated
 using (
   bucket_id = 'site-media'
-  and (auth.jwt() ->> 'email' = '__ADMIN_EMAIL__')
+  and (auth.jwt() ->> 'email' = 'sahalshaad@gmail.com')
 );
 
 -- Admin delete from site-media
@@ -304,5 +304,5 @@ for delete
 to authenticated
 using (
   bucket_id = 'site-media'
-  and (auth.jwt() ->> 'email' = '__ADMIN_EMAIL__')
+  and (auth.jwt() ->> 'email' = 'sahalshaad@gmail.com')
 );
