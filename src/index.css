@@ -21,6 +21,8 @@
   --badge-bg: #F5F5F4;
   --badge-border: #E7E5E4;
   --accent-color: #10B981;
+  --title-shine-base: #78716C;
+  --title-shine-highlight: #1C1917;
 }
 
 .dark {
@@ -37,6 +39,8 @@
   --badge-bg: rgba(255, 255, 255, 0.04);
   --badge-border: rgba(255, 255, 255, 0.08);
   --accent-color: #10B981;
+  --title-shine-base: #78716C;
+  --title-shine-highlight: #FFFFFF;
 }
 
 @layer base {
@@ -77,6 +81,43 @@
 
 .animate-slide-in {
   animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Professional Title ambient shimmer effect (preserves original font) */
+.role-shimmer {
+  display: inline-block;
+  background: linear-gradient(
+    110deg,
+    var(--title-shine-base) 0%,
+    var(--title-shine-base) 28%,
+    var(--title-shine-highlight) 50%,
+    var(--title-shine-base) 72%,
+    var(--title-shine-base) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: roleShimmer 4.2s ease-in-out infinite;
+}
+
+@keyframes roleShimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  45%, 100% {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-shimmer {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: initial;
+    color: var(--text-muted);
+  }
 }
 
 @layer utilities {

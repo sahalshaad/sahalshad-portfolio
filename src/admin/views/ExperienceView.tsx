@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
 import {
   Plus,
   ArrowUp,
@@ -8,11 +8,18 @@ import {
   Loader2,
   Briefcase,
   CheckCircle2,
+  ListPlus,
+  AlignLeft,
+  X,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { ExperienceItem } from '../types'
 import { DeleteDialog } from '../components/DeleteDialog'
 import { formatSupabaseError } from '../utils/error'
+import {
+  parseExperiencePoints,
+  serializeExperiencePoints,
+} from '../../utils/experiencePoints'
 
 export function ExperienceView() {
   const [experiences, setExperiences] = useState<ExperienceItem[]>([])
@@ -24,6 +31,12 @@ export function ExperienceView() {
   const [isEditing, setIsEditing] = useState(false)
   const [activeItem, setActiveItem] = useState<Partial<ExperienceItem> | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Points / Achievements state inside modal
+  const [points, setPoints] = useState<string[]>([])
+  const [newPointInput, setNewPointInput] = useState('')
+  const [isBulkMode, setIsBulkMode] = useState(false)
+  const [bulkTextInput, setBulkTextInput] = useState('')
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<ExperienceItem | null>(null)
@@ -48,11 +61,16 @@ export function ExperienceView() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadExperiences()
   }, [])
 
   function openCreate() {
-    const nextOrder = experiences.length > 0 ? Math.max(...experiences.map((e) => e.sort_order)) + 1 : 1
+    const nextOrder =
+      experiences.length > 0
+        ? Math.max(...experiences.map((e) => e.sort_order)) + 1
+        : 1
+
     setActiveItem({
       job_role: '',
       company_name: '',
@@ -61,17 +79,94 @@ export function ExperienceView() {
       sort_order: nextOrder,
       is_active: true,
     })
+    setPoints([])
+    setNewPointInput('')
+    setIsBulkMode(false)
+    setBulkTextInput('')
     setIsEditing(true)
   }
 
   function openEdit(item: ExperienceItem) {
     setActiveItem(item)
+    const parsedPoints = parseExperiencePoints(item.description)
+    setPoints(parsedPoints)
+    setNewPointInput('')
+    setIsBulkMode(false)
+    setBulkTextInput('')
     setIsEditing(true)
+  }
+
+  // --- Points Management Helpers ---
+  function handleAddPoint() {
+    const trimmed = newPointInput.trim()
+    if (!trimmed) return
+    setPoints((prev) => [...prev, trimmed])
+    setNewPointInput('')
+  }
+
+  function handlePointKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddPoint()
+    }
+  }
+
+  function handleUpdatePoint(index: number, val: string) {
+    setPoints((prev) => {
+      const copy = [...prev]
+      copy[index] = val
+      return copy
+    })
+  }
+
+  function handleDeletePoint(index: number) {
+    setPoints((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function handleMovePoint(index: number, direction: 'up' | 'down') {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= points.length) return
+    setPoints((prev) => {
+      const copy = [...prev]
+      const temp = copy[index]
+      copy[index] = copy[targetIndex]
+      copy[targetIndex] = temp
+      return copy
+    })
+  }
+
+  function handleToggleBulkMode() {
+    if (!isBulkMode) {
+      // Switching to bulk mode: convert current points into bulleted/multiline text
+      setBulkTextInput(points.map((p) => `• ${p}`).join('\n'))
+      setIsBulkMode(true)
+    } else {
+      // Switching back to list mode: parse whatever text is there
+      const parsed = parseExperiencePoints(bulkTextInput)
+      setPoints(parsed)
+      setIsBulkMode(false)
+    }
+  }
+
+  function handleApplyBulkText() {
+    const parsed = parseExperiencePoints(bulkTextInput)
+    setPoints(parsed)
+    setIsBulkMode(false)
   }
 
   async function handleSaveItem(e: FormEvent) {
     e.preventDefault()
     if (!activeItem?.job_role || !activeItem?.company_name) return
+
+    // Finalize points: if bulk mode is active, parse bulk text; otherwise check if there's an unadded point in input
+    let finalPoints = [...points]
+    if (isBulkMode) {
+      finalPoints = parseExperiencePoints(bulkTextInput)
+    } else if (newPointInput.trim()) {
+      finalPoints.push(newPointInput.trim())
+    }
+
+    const serializedDescription = serializeExperiencePoints(finalPoints)
 
     setIsSaving(true)
     setErrorMessage('')
@@ -84,7 +179,7 @@ export function ExperienceView() {
             job_role: activeItem.job_role,
             company_name: activeItem.company_name,
             duration: activeItem.duration || '',
-            description: activeItem.description || '',
+            description: serializedDescription,
             sort_order: activeItem.sort_order ?? 0,
             is_active: activeItem.is_active ?? true,
           })
@@ -98,7 +193,7 @@ export function ExperienceView() {
             job_role: activeItem.job_role,
             company_name: activeItem.company_name,
             duration: activeItem.duration || '',
-            description: activeItem.description || '',
+            description: serializedDescription,
             sort_order: activeItem.sort_order ?? 0,
             is_active: activeItem.is_active ?? true,
           },
@@ -189,7 +284,7 @@ export function ExperienceView() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">Experience</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Work history, agency roles, and achievements shown in the career timeline.
+            Work history, roles, and key achievements shown in the career timeline.
           </p>
         </div>
         <button
@@ -235,90 +330,116 @@ export function ExperienceView() {
         </div>
       ) : (
         <div className="space-y-3">
-          {experiences.map((item, index) => (
-            <div
-              key={item.id}
-              className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border p-4 transition ${
-                item.is_active
-                  ? 'border-zinc-800 bg-zinc-900/60'
-                  : 'border-zinc-800/40 bg-zinc-900/20 opacity-70'
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    disabled={index === 0}
-                    onClick={() => handleMoveOrder(item, 'up')}
-                    className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
-                    title="Move Up"
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={index === experiences.length - 1}
-                    onClick={() => handleMoveOrder(item, 'down')}
-                    className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
-                    title="Move Down"
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+          {experiences.map((item, index) => {
+            const itemPoints = parseExperiencePoints(item.description)
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-white">{item.job_role}</span>
-                    <span className="text-xs text-zinc-400">• {item.company_name}</span>
-                    {!item.is_active ? (
-                      <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
-                        Inactive
+            return (
+              <div
+                key={item.id}
+                className={`flex flex-col sm:flex-row sm:items-start justify-between gap-4 rounded-2xl border p-4 transition ${
+                  item.is_active
+                    ? 'border-zinc-800 bg-zinc-900/60'
+                    : 'border-zinc-800/40 bg-zinc-900/20 opacity-70'
+                }`}
+              >
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-1 pt-0.5">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => handleMoveOrder(item, 'up')}
+                      className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                      title="Move Up"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === experiences.length - 1}
+                      onClick={() => handleMoveOrder(item, 'down')}
+                      className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                      title="Move Down"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-white">{item.job_role}</span>
+                      <span className="text-xs text-zinc-400">• {item.company_name}</span>
+                      <span className="rounded-md border border-zinc-700 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-mono text-zinc-300">
+                        {itemPoints.length} {itemPoints.length === 1 ? 'point' : 'points'}
                       </span>
+                      {!item.is_active ? (
+                        <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                          Inactive
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-emerald-500/20 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-1 font-mono text-xs text-zinc-400">{item.duration}</p>
+
+                    {/* Points preview */}
+                    {itemPoints.length > 0 ? (
+                      <ul className="mt-2.5 space-y-1.5 text-xs text-zinc-300">
+                        {itemPoints.slice(0, 2).map((pt, pIdx) => (
+                          <li key={pIdx} className="flex items-start gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                            <span className="line-clamp-1">{pt}</span>
+                          </li>
+                        ))}
+                        {itemPoints.length > 2 ? (
+                          <li className="text-[11px] text-zinc-500 pl-3.5">
+                            +{itemPoints.length - 2} more achievement points
+                          </li>
+                        ) : null}
+                      </ul>
                     ) : (
-                      <span className="rounded-full border border-emerald-500/20 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                        Active
-                      </span>
+                      <p className="mt-1 text-xs text-zinc-500 italic">No achievements added yet.</p>
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs text-zinc-500">{item.duration}</p>
-                  <p className="mt-1 text-xs text-zinc-400 line-clamp-2">{item.description}</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleActive(item)}
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800"
+                  >
+                    {item.is_active ? 'Set Inactive' : 'Set Active'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(item)}
+                    className="p-2 text-zinc-400 hover:text-white"
+                    title="Edit"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(item)}
+                    className="p-2 text-red-400 hover:text-red-300"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => handleToggleActive(item)}
-                  className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800"
-                >
-                  {item.is_active ? 'Set Inactive' : 'Set Active'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openEdit(item)}
-                  className="p-2 text-zinc-400 hover:text-white"
-                  title="Edit"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(item)}
-                  className="p-2 text-red-400 hover:text-red-300"
-                  title="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       {/* Edit / Add Modal */}
       {isEditing && activeItem ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-xl rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl my-8">
             <h3 className="text-lg font-semibold text-white">
               {activeItem.id ? 'Edit Experience' : 'Add New Experience'}
             </h3>
@@ -368,22 +489,145 @@ export function ExperienceView() {
                   <input
                     type="number"
                     value={activeItem.sort_order ?? 0}
-                    onChange={(e) => setActiveItem({ ...activeItem, sort_order: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setActiveItem({ ...activeItem, sort_order: parseInt(e.target.value) || 0 })
+                    }
                     className="mt-1.5 w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300">Key Achievements / Description</label>
-                <textarea
-                  rows={4}
-                  required
-                  value={activeItem.description || ''}
-                  onChange={(e) => setActiveItem({ ...activeItem, description: e.target.value })}
-                  placeholder="Key metrics, initiatives, or responsibilities delivered in this role."
-                  className="mt-1.5 w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
-                />
+              {/* Structured Points / Achievements Section */}
+              <div className="space-y-2.5 pt-2 border-t border-zinc-800/80">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <label className="block text-xs font-semibold text-zinc-300">
+                      Key Achievements & Points
+                    </label>
+                    <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-mono text-zinc-400">
+                      {points.length} {points.length === 1 ? 'item' : 'items'}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleBulkMode}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-medium text-violet-400 hover:text-violet-300 transition"
+                  >
+                    {isBulkMode ? (
+                      <>
+                        <ListPlus className="h-3 w-3" />
+                        <span>Switch to Point-by-Point List</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlignLeft className="h-3 w-3" />
+                        <span>Quick Paste / Bulk Mode</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {isBulkMode ? (
+                  <div className="space-y-2">
+                    <textarea
+                      rows={5}
+                      value={bulkTextInput}
+                      onChange={(e) => setBulkTextInput(e.target.value)}
+                      placeholder="Paste multi-line text from resume, LinkedIn, or notes...&#10;• Scaled acquisition to 4.2x ROAS&#10;• Reduced cost-per-lead by 31%&#10;• Built executive reporting cadence"
+                      className="w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-xs text-white outline-none focus:border-violet-500 font-mono leading-relaxed"
+                    />
+                    <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                      <span>Each line will become a separate bullet point.</span>
+                      <button
+                        type="button"
+                        onClick={handleApplyBulkText}
+                        className="rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 py-1 font-medium text-zinc-200 transition"
+                      >
+                        Convert to List
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {/* List of existing points */}
+                    {points.length > 0 ? (
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {points.map((pt, pIdx) => (
+                          <div
+                            key={pIdx}
+                            className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2 group hover:border-zinc-700 transition"
+                          >
+                            <span className="font-mono text-[10px] text-zinc-500 w-5 shrink-0 text-center">
+                              {String(pIdx + 1).padStart(2, '0')}
+                            </span>
+
+                            <input
+                              type="text"
+                              value={pt}
+                              onChange={(e) => handleUpdatePoint(pIdx, e.target.value)}
+                              className="flex-1 bg-transparent text-xs text-white outline-none focus:text-violet-300"
+                              placeholder="Achievement point description..."
+                            />
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                disabled={pIdx === 0}
+                                onClick={() => handleMovePoint(pIdx, 'up')}
+                                className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                                title="Move Point Up"
+                              >
+                                <ArrowUp className="h-3 w-3" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={pIdx === points.length - 1}
+                                onClick={() => handleMovePoint(pIdx, 'down')}
+                                className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                                title="Move Point Down"
+                              >
+                                <ArrowDown className="h-3 w-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePoint(pIdx)}
+                                className="p-1 text-zinc-500 hover:text-red-400 transition"
+                                title="Delete Point"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-500 italic py-1">
+                        No points added yet. Use the field below to add achievements.
+                      </p>
+                    )}
+
+                    {/* Add new point input bar */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        value={newPointInput}
+                        onChange={(e) => setNewPointInput(e.target.value)}
+                        onKeyDown={handlePointKeyDown}
+                        placeholder="Add an achievement point (Press Enter to add)..."
+                        className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2 text-xs text-white outline-none focus:border-violet-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddPoint}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-700 hover:text-white transition shrink-0"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Add Point</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2 pt-2">

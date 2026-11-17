@@ -35,20 +35,31 @@ export function ExperienceAccordion({ items }: ExperienceProps) {
         {items.map((item, idx) => (
           <div
             key={`${item.company}-${idx}`}
-            className="py-4 first:pt-0 last:pb-0 flex items-baseline justify-between gap-6"
+            className="py-4 first:pt-0 last:pb-0 flex items-start justify-between gap-6"
           >
-            <div className="space-y-1 min-w-0">
-              <h3 className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">
-                {item.role}
-              </h3>
-              <p className="text-xs text-[var(--text-secondary)] font-medium">
-                {item.company}
-              </p>
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">
+                  {item.role}
+                </h3>
+                <span className="text-[var(--text-muted)] text-xs">·</span>
+                <span className="text-xs text-[var(--text-secondary)] font-medium">
+                  {item.company}
+                </span>
+              </div>
+
               {item.achievements?.length ? (
-                <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)] list-disc list-inside">
+                <ul className="mt-2.5 space-y-2">
                   {item.achievements.map((ach, aIdx) => (
-                    <li key={aIdx} className="leading-relaxed">
-                      {ach}
+                    <li
+                      key={aIdx}
+                      className="flex items-start gap-2.5 text-xs text-[var(--text-secondary)] leading-relaxed"
+                    >
+                      <span
+                        className="h-1.5 w-1.5 rounded-full bg-black dark:bg-white mt-1.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>{ach}</span>
                     </li>
                   ))}
                 </ul>
@@ -109,12 +120,23 @@ export function ExperienceAccordion({ items }: ExperienceProps) {
                   isOpen ? 'max-h-96 opacity-100 mt-2.5' : 'max-h-0 opacity-0'
                 }`}
               >
-                <div className="rounded-lg bg-[var(--bg-card-subtle)] p-3 text-xs text-[var(--text-secondary)] space-y-1.5 border border-[var(--border-color)]">
-                  {item.achievements?.map((ach, aIdx) => (
-                    <p key={aIdx} className="leading-relaxed">
-                      {ach}
-                    </p>
-                  ))}
+                <div className="rounded-xl bg-[var(--bg-card-subtle)] p-3.5 text-xs text-[var(--text-secondary)] border border-[var(--border-color)]">
+                  {item.achievements?.length ? (
+                    <ul className="space-y-2">
+                      {item.achievements.map((ach, aIdx) => (
+                        <li
+                          key={aIdx}
+                          className="flex items-start gap-2.5 leading-relaxed"
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full bg-black dark:bg-white mt-1.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span>{ach}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
               </div>
             </div>

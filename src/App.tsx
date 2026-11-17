@@ -25,6 +25,7 @@ import { BottomTabBar } from './components/BottomTabBar'
 import { SectionCard } from './components/SectionCard'
 import { ProjectCard, parseProjectLinks, type ProjectItemData } from './components/ProjectCard'
 import { ExperienceAccordion, type ExperienceItemData } from './components/ExperienceAccordion'
+import { parseExperiencePoints } from './utils/experiencePoints'
 import { Footer } from './components/Footer'
 
 // Editable Availability & Location Constants
@@ -368,7 +369,7 @@ export default function App() {
             role: item.job_role,
             company: item.company_name,
             duration: item.duration,
-            achievements: [item.description],
+            achievements: parseExperiencePoints(item.description),
           }))
         : null) ?? [
         {
@@ -733,8 +734,8 @@ export default function App() {
                 <span className="block text-[var(--text-primary)]">
                   Hello, I’m {name}
                 </span>
-                <span className="block text-[var(--text-muted)] font-medium mt-1 text-2xl sm:text-4xl">
-                  {role}
+                <span className="block font-medium mt-1 text-2xl sm:text-4xl">
+                  <span className="role-shimmer">{role}</span>
                 </span>
               </h1>
               <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed max-w-2xl pt-2">
